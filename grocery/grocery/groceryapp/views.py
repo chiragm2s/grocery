@@ -14,6 +14,7 @@ from knox.views import LoginView as KnoxLoginView
 from . models import *
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from django.views.generic import TemplateView, ListView
 
 # Register API
 class RegisterAPI(generics.GenericAPIView):
@@ -37,6 +38,6 @@ class LoginAPI(KnoxLoginView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
         
-        qs = User.objects.values_list('is_admin', 'email')
-        login(request, user,qs)
+        #qs = User.objects.values_list('is_admin', 'email')
+        login(request, user)
         return super(LoginAPI, self).post(request, format=None)

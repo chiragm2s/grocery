@@ -6,12 +6,15 @@ from django.contrib.auth.models import (
     Group,
 )
 from django.db.models.fields import AutoField
+from django.db.models.manager import BaseManager
 class User(AbstractUser):
     is_admin=models.BooleanField('Is admin',default=False)
     is_customer=models.BooleanField('Is customer',default=False)
     phno=models.IntegerField()
     #is_employee=models.BooleanField('Is employee',default=False)
 
+# class UserManager(BaseManager):
+#     def create_user(self, username, p)
 
 
 class products(models.Model):
