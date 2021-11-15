@@ -41,12 +41,29 @@ class QuantitySerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
+        fields = '__all__'
+
+class CartSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cart
+        fields = '__all__' 
+
+class DeliverySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = delivery
+        fields = '__all__' 
+
+
+
+class DeliveryAssignedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = delivery_assigned
         fields = '__all__' 
     
 
 class ProductSerializer(serializers.ModelSerializer):
     #category = CategorySerializer()
-    quantity_type = QuantitySerializer()
+    #quantity_type = QuantitySerializer()
     class Meta:
         model = products
         fields = '__all__'
