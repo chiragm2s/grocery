@@ -37,7 +37,7 @@ class RegisterAPI(generics.GenericAPIView):
 
 #for login api
 class LoginAPI(KnoxLoginView):
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = (permissions.AllowAny)
 
     def post(self, request, format=None):
         serializer = AuthTokenSerializer(data=request.data)
@@ -144,7 +144,7 @@ def orderapi(request,id=0):
 def cartapi(request,id=0):
     if request.method=='GET':
         cartvariable = Cart.objects.all()
-        cart_serializer=OrderSerializer(cartvariable,many=True)
+        cart_serializer=CartSerializer(cartvariable,many=True)
         #orderapi_data=JSONParser().parse(request)
         # ordersapi=products.objects.get(id=orderapi_data['id'])
         # ordersapiserializers=OrderSerializer(ordersapi)
@@ -165,6 +165,7 @@ def cartapi(request,id=0):
         return JsonResponse(errors,safe=False)
 
 #for delivery.api
+@csrf_exempt
 def deliveryapi(request,id=0):
     if request.method=='GET':
         deliveryvariable = delivery.objects.all()
@@ -178,7 +179,7 @@ def deliveryapi(request,id=0):
 
     elif request.method=='POST':
         delivery_data=JSONParser().parse(request)
-        deliverysapi=CartSerializer(data=delivery_data)
+        deliverysapi=DeliverySerializer(data=delivery_data)
         #print(productsapiserializers)
         if deliverysapi.is_valid(raise_exception=False):
             deliverysapi.save()
@@ -193,7 +194,7 @@ def deliveryapi(request,id=0):
 @csrf_exempt
 def deliverAssignedyapi(request,id=0):
     if request.method=='GET':
-        deliveryAssignedvariable = delivery.objects.all()
+        deliveryAssignedvariable = delivery_assigned.objects.all()
         delivryAssigned_serializer=DeliveryAssignedSerializer(deliveryAssignedvariable,many=True)
         #orderapi_data=JSONParser().parse(request)
         # ordersapi=products.objects.get(id=orderapi_data['id'])
@@ -204,7 +205,7 @@ def deliverAssignedyapi(request,id=0):
 
     elif request.method=='POST':
         deliveryAssigned_data=JSONParser().parse(request)
-        deliverysapi=CartSerializer(data=deliveryAssigned_data)
+        deliverysapi=DeliveryAssignedSerializer(data=deliveryAssigned_data)
         #print(productsapiserializers)
         if deliverysapi.is_valid(raise_exception=False):
             deliverysapi.save()
@@ -213,3 +214,20 @@ def deliverAssignedyapi(request,id=0):
             "message":deliverysapi.errors,"status":401
         }
         return JsonResponse(errors,safe=False)
+
+
+
+#for authentication
+from rest_framework import permissions, generics, status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from django.contrib.auth import login
+from knox.auth import TokenAuthentication
+# from knox.views import LoginView as KnoxLoginView
+from .utils import phone_validator, password_generator, otp_generator
+from .serializers import (CreateUserSerializer, ChangePasswordSerializer,
+                          UserSerializer, LoginUserSerializer, ForgetPasswordSerializer)
+from groceryapp.models import User, PhoneOTP
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
+import requests

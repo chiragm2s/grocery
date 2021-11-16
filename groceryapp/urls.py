@@ -1,6 +1,7 @@
 from rest_framework import views
 from .views import RegisterAPI,LoginAPI,ProductView,DemoView,OrderView,DeliveryView
-from django.urls import path
+from django.urls import path, include, re_path
+from django.contrib import admin
 from django.conf.urls import url
 from knox import views as knox_views
 from django.urls import path
@@ -23,5 +24,8 @@ urlpatterns = [
     url('login' , views.LoginAPI ),
     url('login' , views.RegisterAPI ),
 
-
+    #for authentication
+    re_path(r'^admin/', admin.site.urls),
+    re_path(r'^api/', include('accounts.urls', namespace='account')),
+    re_path(r'^assess/', include('check.urls', namespace='check')),
 ]
