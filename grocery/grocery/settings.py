@@ -27,6 +27,7 @@ SECRET_KEY = 'django-insecure-gx&f8gn8ybw*dr=!)scu@zev1-!v#s9+#n#+81u4%+(9m87^cc
 DEBUG = True
 
 ALLOWED_HOSTS = []
+#ALLOWED_HOSTS = ['grocery.pos.apya.in']
 
 
 # Application definition
@@ -41,7 +42,6 @@ INSTALLED_APPS = [
     'groceryapp',
     'rest_framework',
     'knox',
-    #'rest_framework_swagger',
     'drf_yasg',
 ]
 
@@ -125,6 +125,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS =(
+    os.path.join(BASE_DIR,'groceryapp'),
+)
+STATIC_ROOT = 'staticfiles'
+# Default primary key field type
+# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -133,6 +139,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 AUTH_USER_MODEL='groceryapp.User'
+# AUTHENTICATION_BACKENDS = ['path.to.auth.module.EmailBackend']  
 
 
 REST_FRAMEWORK = {

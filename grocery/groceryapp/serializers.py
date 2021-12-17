@@ -1,3 +1,4 @@
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import serializers
 from django.contrib.auth import authenticate #for authentication and phone otp
 #from django.contrib.auth.models import User
@@ -29,57 +30,108 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
-        return user
+#         return user
 
-# Register Serializer
-class RegisterSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('id', 'username', 'email', 'password','is_admin','phone')
-        extra_kwargs = {'password': {'write_only': True}}
+# # Register Serializer
+# class RegisterSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = ('id', 'username',  'password','is_admin','phone')
+#         extra_kwargs = {'password': {'write_only': True}}
 
-    def validate(self, data):
-        phno = data.get("phone")
-        if len(str(phno)) != 10:
-            raise Exception("Phone number is not valid")
+#     def validate(self, data):
+#         phno = data.get("phone")
+#         if len(str(phno)) != 10:
+#             raise Exception("Phone number is not valid")
         
-        return data
+#         return data
 
 
-    def create(self, validated_data):
-        print(validated_data)
-        user = User.objects.create_user(username=validated_data['username'],email= validated_data['email'], password=validated_data['password'], phno=validated_data.get("phone"),is_admin=validated_data.get("is_admin"))
+#     def create(self, validated_data):
+#         print(validated_data)
+#         user = User.objects.create_user(username=validated_data['username'],email= validated_data['email'], password=validated_data['password'], phno=validated_data.get("phone"),is_admin=validated_data.get("is_admin"))
 
-        return user
+#         return user
+
+
+# # User serializer
+# class UserRegisterSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = ('username', 'password','is_admin','phone','name')
+#         extra_kwargs = {'password': {'write_only': True}}
+    
+#     def validate(self, attrs):
+#         # print("data")
+        
+#         username = attrs.get('username','')
+#         phone = attrs.get('phone','')
+#         # password = attrs.get('password','')
+#         # print(password)
+#         if User.objects.filter(username=username).exists():
+#             raise serializers.ValidationError(
+#                 {'username':{'Email Already in use'}})
+#         elif len(str(phone)) != 10:
+#             raise serializers.ValidationError(
+#                 {'phone':'Phone Number must be 10 Digits'})
+#         return super().validate(attrs)
+
+#     def create(self, validated_data):
+#         print(validated_data)
+#         user = User.objects.create_user(username= validated_data['username'], password=validated_data['password'], phone=validated_data.get("phone"),is_admin=validated_data.get("is_admin"))
+#         return user
 
 
 # User serializer
 class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('username','email', 'password','is_admin','phone')
-        extra_kwargs = {'password': {'write_only': True}}
-    
-    def validate(self, attrs):
-        # print("data")
-        username = attrs.get('username',"")
-        email = attrs.get('email','')
-        phone = attrs.get('phone','')
-        # password = attrs.get('password','')
-        # print(password)
-        if User.objects.filter(email=email).exists():
-            raise serializers.ValidationError(
-                {'email':{'Email Already in use'}})
-        elif len(str(phone)) != 10:
-            raise serializers.ValidationError(
-                {'phone':'Phone Number must be 10 Digits'})
-        return super().validate(attrs)
+        fields = ['id', 'phone','name','is_admin','is_customer','is_deliveryboy', 'email', 'password']
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
 
     def create(self, validated_data):
-        print(validated_data)
-        user = User.objects.create_user(username=validated_data['username'],email= validated_data['email'], password=validated_data['password'], phone=validated_data.get("phone"),is_admin=validated_data.get("is_admin"))
-        return user
+        password = validated_data.pop('password', None)
+        instance = self.Meta.model(**validated_data)
+        if password is not None:
+            instance.set_password(password)
+        instance.save()
+        return instance
 
+##Login Serializer
+class LoginUserSerializer(serializers.Serializer):
+    email = serializers.CharField()
+    password = serializers.CharField(
+        style={'input_type': 'password'}, trim_whitespace=False)
+    
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+        if email and password:
+            
+            if User.objects.filter(email=email).exists():
+                user = authenticate(request=self.context.get('request'),
+                                    email=email, password=password)
+                print(password)
+                
+            else:
+                msg = {'detail': 'Email ID is not registered.',
+                       'register': False,"status":404}
+                raise serializers.ValidationError(msg)
+
+            if not user:
+                msg = {
+                    'detail': 'Unable to log in with provided credentials.', 'register': True,"status":404}
+                raise serializers.ValidationError(msg, code='authorization')
+
+        else:
+            msg = 'Must include "Email ID" and "password".'
+            raise serializers.ValidationError(msg, code='authorization')
+
+        attrs['user'] = user
+        
+        return attrs
 
 class QuantitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -90,6 +142,11 @@ class QuantitySerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
+        fields = '__all__'
+
+class deliveryaddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = deliverAddresstable
         fields = '__all__'
 
 class CartSerializer(serializers.ModelSerializer):
@@ -111,7 +168,7 @@ class DeliveryAssignedSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     #category = CategorySerializer()
     #quantity_type = QuantitySerializer()
-    image = Base64ImageField()
+    #image = Base64ImageField()
     class Meta:
         model = products
         fields = ('__all__')
@@ -126,38 +183,46 @@ class DeliverySerializer(serializers.ModelSerializer):
         model = delivery
         fields = '__all__'
 
-#for login
-class LoginUserSerializer(serializers.Serializer):
-    phone = serializers.CharField()
-    password = serializers.CharField(
-        style={'input_type': 'password'}, trim_whitespace=False)
 
-    def validate(self, attrs):
-        phone = attrs.get('phone')
-        password = attrs.get('password')
+# ##Login Serializer
+# class LoginUserSerializer(serializers.Serializer):
+#     email = serializers.CharField()
+#     password = serializers.CharField(
+#         style={'input_type': 'password'}, trim_whitespace=False)
+    
 
-        if phone and password:
-            if User.objects.filter(phone=phone).exists():
-                user = authenticate(request=self.context.get('request'),
-                                    phone=phone, password=password)
+#     def validate(self, attrs):
+#         email = attrs.get('email')
+#         password = attrs.get('password')
+#         # email = attrs.get('email')
+#         # print(email)
+#         # if not password:
+#         #         msg = {'detail': 'email number is not registered.',
+#         #                'register': False,"status":404}
+#         #         raise serializers.ValidationError(msg) 
+#         if email and password:
+            
+#             if User.objects.filter(username=email).exists():
+#                 user = authenticate(request=self.context.get('request'),
+#                                     username=email, password=password)
+                
+#             else:
+#                 msg = {'detail': 'username is not registered.',
+#                        'register': False,"status":404}
+#                 raise serializers.ValidationError(msg)
 
-            else:
-                msg = {'detail': 'Phone number is not registered.',
-                       'register': False}
-                raise serializers.ValidationError(msg)
+#             if not user:
+#                 msg = {
+#                     'detail': 'Unable to log in with provided credentials.', 'register': True,"status":404}
+#                 raise serializers.ValidationError(msg, code='authorization')
 
-            if not user:
-                msg = {
-                    'detail': 'Unable to log in with provided credentials.', 'register': True}
-                raise serializers.ValidationError(msg, code='authorization')
+#         else:
+#             msg = 'Must include "username" and "password".'
+#             raise serializers.ValidationError(msg, code='authorization')
 
-        else:
-            msg = 'Must include "username" and "password".'
-            raise serializers.ValidationError(msg, code='authorization')
-
-        attrs['user'] = user
-        return attrs
-
+#         attrs['user'] = user
+        
+#         return attrs
 
 #for change of password
 class ChangePasswordSerializer(serializers.Serializer):
